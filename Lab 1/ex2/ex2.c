@@ -55,6 +55,7 @@ int main(int argc, char **argv)
         lst->head = NULL;
         lst->tail = NULL;  
         read_file_inputs(lst, filePointer);
+        free(lst);
     }
     return 0;
 }
