@@ -2,9 +2,9 @@
 
 ####################
 # Lab 1 Exercise 5
-# Name:
-# Student No:
-# Lab Group: 
+# Name: H Mohamed Hussain
+# Student No: A0199425R
+# Lab Group: 10
 ####################
 
 echo "Printing system call report"
