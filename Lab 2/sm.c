@@ -17,6 +17,14 @@ void sm_free(void) {
 
 // Exercise 1a/2: start services
 void sm_start(const char *processes[]) {
+    int childPid = fork()
+    if(childPid == 0){
+        execv(processes[0],&processes[1]);
+    }
+    else{
+        wait(NULL);
+    }
+    return 0;
 }
 
 // Exercise 1b: print service status
