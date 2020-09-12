@@ -41,7 +41,7 @@ size_t sm_status(sm_status_t statuses[]) {
     int i;
     for(i = 0; i<processes_count; i++){
         statuses[i] = processes_array[i];
-        statuses[i].running = waitpid(processes_array[i].pid, NULL,WNOHANG);
+        statuses[i].running = waitpid(processes_array[i].pid, NULL,WNOHANG) ? 0 : 1;
     }
     return processes_count;
 }
