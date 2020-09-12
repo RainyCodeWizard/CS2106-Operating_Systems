@@ -11,7 +11,8 @@
 
 #include <stdio.h> //Delete this later
 
-sm_status_t processes[32];
+sm_status_t processes_array[32]; // To take note of the informations of processes
+int processes_count = 0; // To take note of the amount of processes currently
 
 // Use this function to any initialisation if you need to.
 void sm_init(void) {
@@ -27,12 +28,21 @@ void sm_start(const char *processes[]) {
     if(childPid == 0){
         execv(processes[0],processes);
     }
+    else{
+        processes_array[processes_count].pid = childPid;
+        processes_array[processes_count].path = processes[0];
+        processes_count++;
+    }
     return;
 }
 
 // Exercise 1b: print service status
 size_t sm_status(sm_status_t statuses[]) {
-
+    int i;
+    for(i = 0; i<processes_count; i++){
+        statuses[i] = processes_array[i];
+        statuses[i].running = waitpid(processes_array[i].pid, NULL,WNOHANG);
+    }
 }
 
 // Exercise 3: stop service, wait on service, and shutdown
