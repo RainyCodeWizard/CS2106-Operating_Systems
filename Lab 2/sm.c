@@ -43,6 +43,7 @@ size_t sm_status(sm_status_t statuses[]) {
         statuses[i] = processes_array[i];
         statuses[i].running = waitpid(processes_array[i].pid, NULL,WNOHANG);
     }
+    return processes_count;
 }
 
 // Exercise 3: stop service, wait on service, and shutdown
