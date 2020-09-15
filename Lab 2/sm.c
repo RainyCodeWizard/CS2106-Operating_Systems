@@ -11,7 +11,7 @@
 
 #include <stdio.h> //Delete this later
 
-sm_status_t processes_array[32]; // To take note of the informations of processes
+sm_status_t processes_array[SM_MAX_SERVICES]; // To take note of the informations of processes
 int processes_count = 0; // To take note of the amount of processes currently
 
 // Use this function to any initialisation if you need to.
