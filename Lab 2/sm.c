@@ -40,14 +40,14 @@ void sm_start(const char *processes[]) {
         pipe(fds);        
         if (fork() == 0){ 
             dup2(fds[0],STDIN_FILENO);
-            close(fd[0]);
+            close(fds[0]);
             close(fds[1]);
-            execl("bin/sha256sum", NULL);
+            execl("/bin/sha256sum","sha256sum", NULL);
         }
         close(fds[0]);
         dup2(fds[1], STDOUT_FILENO);
         close(fds[1]);
-        execl("bin/echo","hello",NULL);
+        execl("/bin/echo","echo","hello",NULL);
     }
     else{
         processes_array[processes_count].pid = childPid;
