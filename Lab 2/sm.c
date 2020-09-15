@@ -8,6 +8,7 @@
 #include "sm.h"
 #include <sys/wait.h>
 #include <unistd.h>
+#include <string.h>
 
 #include <stdio.h> //Delete this later
 
@@ -30,7 +31,7 @@ void sm_start(const char *processes[]) {
     }
     else{
         processes_array[processes_count].pid = childPid;
-        processes_array[processes_count].path = processes[0];
+        processes_array[processes_count].path = strdup(processes[0]);
         processes_count++;
     }
     return;
