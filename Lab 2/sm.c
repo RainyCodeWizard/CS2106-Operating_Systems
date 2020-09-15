@@ -34,17 +34,19 @@ void sm_start(const char *processes[]) {
         i++;
     }
     // Assume 2 processes for now
-    int fds[2];
-    pipe(fds);
-
     pid_t childPid = fork();
     if (childPid == 0){
+        int fds[2];
         pipe(fds);        
         if (fork() == 0){ 
             dup2(fds[0],STDIN_FILENO);
+            close(fd[0]);
+            close(fds[1]);
             execl("bin/sha256sum", NULL);
         }
         close(fds[0]);
+        dup2(fds[1], STDOUT_FILENO);
+        close(fds[1]);
         execl("bin/echo","hello",NULL);
     }
     else{
