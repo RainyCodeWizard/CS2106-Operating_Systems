@@ -25,9 +25,27 @@ void sm_free(void) {
 
 // Exercise 1a/2: start services
 void sm_start(const char *processes[]) {
+    int i = 0, count = 0; //count represents the number of processes
+    while(1){
+        if (!processes[i]){ //if NULL
+            if(i > 0 && !processes[i-1]) break;
+            count++;
+        }
+        i++;
+    }
+    // Assume 2 processes for now
+    int fds[2];
+    pipe(fds);
+
     pid_t childPid = fork();
-    if(childPid == 0){
-        execv(processes[0],processes);
+    if (childPid == 0){
+        pipe(fds);        
+        if (fork() == 0){ 
+            dup2(fds[0],STDIN_FILENO);
+            execl("bin/sha256sum", NULL);
+        }
+        close(fds[0]);
+        execl("bin/echo","hello",NULL);
     }
     else{
         processes_array[processes_count].pid = childPid;
