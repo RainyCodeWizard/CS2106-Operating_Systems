@@ -9,9 +9,14 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include <stdio.h> //Delete this later
 //Need to free malloc
+int getIndex(const char *processes[], int count);
+void execStart(int pipe[], const char *process[]);
+void execMiddle(int pipe1[], int pipe2[], const char *process[]);
+void execEnd(int pipe[], const char *process[]);
 
 sm_status_t processes_array[SM_MAX_SERVICES]; // To take note of the informations of processes
 int processes_count = 0; // To take note of the amount of processes currently
@@ -43,8 +48,8 @@ void sm_start(const char *processes[]) {
             int pipeFd[count - 1][2]; // File descriptors for each process.  
             for(i = 0; i<count-1; i++){
                 pipe(pipeFd[i]);
-                arr[i] = fork();
-                if (!arr[i]){
+                arr[i].pid = fork();
+                if (!arr[i].pid){
                     if(i == 0){
                         execStart(pipeFd[0], processes);
                     }
@@ -71,7 +76,7 @@ int getIndex(const char *processes[], int count){
         if(i == count){
             break;
         }
-        if(!process[index]){ // if NULL
+        if(!processes[index]){ // if NULL
             i++;
         }
         index++;
