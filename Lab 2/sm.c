@@ -11,6 +11,7 @@
 #include <string.h>
 
 #include <stdio.h> //Delete this later
+//Need to free malloc
 
 sm_status_t processes_array[SM_MAX_SERVICES]; // To take note of the informations of processes
 int processes_count = 0; // To take note of the amount of processes currently
@@ -33,21 +34,27 @@ void sm_start(const char *processes[]) {
         }
         i++;
     }
-    // Assume 2 processes for now
+    sm_status_t* arr = (sm_status_t*)malloc(count*sizeof(sm_status_t)); //Creates an array to store child processors
     pid_t childPid = fork();
+    arr[0].pid = childPid;
     if (childPid == 0){
-        int fds[2];
-        pipe(fds);        
-        if (fork() == 0){ 
-            dup2(fds[0],STDIN_FILENO);
-            close(fds[0]);
-            close(fds[1]);
-            execl("/bin/sha256sum","sha256sum", NULL);
+        if (count==1) execv(processes[0],processes);
+        else {
+            int pipeFd[count - 1][2]; // File descriptors for each process.  
+            for(i = 0; i<count-1; i++){
+                pipe(pipeFd[i]);
+                arr[i] = fork();
+                if (!arr[i]){
+                    if(i == 0){
+                        execStart(pipeFd[0], processes);
+                    }
+                    else{
+                        execMiddle(pipeFd[i-1], pipeFd[i], &processes[getIndex(processes,i)]);
+                    }
+                }                
+            }
+            execEnd(pipeFd[count-2], &processes[getIndex(processes,count-1)]);
         }
-        close(fds[0]);
-        dup2(fds[1], STDOUT_FILENO);
-        close(fds[1]);
-        execl("/bin/echo","echo","hello",NULL);
     }
     else{
         processes_array[processes_count].pid = childPid;
@@ -55,6 +62,68 @@ void sm_start(const char *processes[]) {
         processes_count++;
     }
     return;
+}
+
+// Returns the index of the process wanted
+int getIndex(const char *processes[], int count){
+    int index = 0, i = 0;
+    while(1){
+        if(i == count){
+            break;
+        }
+        if(!process[index]){ // if NULL
+            i++;
+        }
+        index++;
+    }
+    return index;
+}
+
+// To get the correct process argument in array form
+// void sliceArray(const char *processes[], const char *process[], int index){
+//     int i = 0, count = 0, j = 0;
+//     while(1){
+//         if(count > index){
+//             break;
+//         }
+//         if(!process[i]){ // if NULL
+//             count++;
+//         }
+//         else if(count == index){
+//             process[j] = strdup(processes[i]);
+//             j++;
+//         }
+//         i++;
+//     }
+//     process[j] = NULL;
+// }
+
+// INCLUDE close stdin ?
+// serivce --> pipe
+void execStart(int pipe[], const char *process[]){
+    dup2(pipe[1], 1); // output-->pipe
+    close(pipe[0]);
+    close(pipe[1]);
+    execv(process[0],process);
+}
+
+// pipe1 --> service --> pipe2
+void execMiddle(int pipe1[], int pipe2[], const char *process[]){
+    dup2(pipe1[0],0); // pipe1-->input
+    dup2(pipe2[1],1); // output-->pipe2
+    close(pipe1[0]);
+    close(pipe1[1]);
+    close(pipe2[0]);
+    close(pipe2[1]);
+    execv(process[0],process);
+}
+
+// pipe --> service --> stdout
+void execEnd(int pipe[], const char *process[]){
+    dup2(pipe[0],0); // pipe-->input
+    close(pipe[0]);
+    close(pipe[1]);
+    execv(process[0],process);
 }
 
 // Exercise 1b: print service status
@@ -84,3 +153,4 @@ void sm_startlog(const char *processes[]) {
 // Exercise 5: show log file
 void sm_showlog(size_t index) {
 }
+
