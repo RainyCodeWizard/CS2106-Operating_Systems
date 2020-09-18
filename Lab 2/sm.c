@@ -51,8 +51,8 @@ void sm_start(const char *processes[]) {
         processes_count++;
         if(childPid == 0){
             if (i == 0){
+                close(STDIN_FILENO);
                 if(count == 1){ //if only 1 process
-                    close(STDIN_FILENO);
                     execv(processes[0],processes);
                 }
                 int j;
@@ -68,7 +68,7 @@ void sm_start(const char *processes[]) {
                     close(fd[k][0]);
                     close(fd[k][1]);
                 }
-                execEnd(fd[i], &processes[getIndex(processes,i)]);
+                execEnd(fd[i-1], &processes[getIndex(processes,i)]);
             }
             else{
                 int l;
