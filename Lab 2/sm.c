@@ -40,34 +40,91 @@ void sm_start(const char *processes[]) {
         i++;
     }
     sm_status_t* arr = (sm_status_t*)malloc(count*sizeof(sm_status_t)); //Creates an array to store child processors
-    pid_t childPid = fork();
-    arr[0].pid = childPid;
-    if (childPid == 0){
-        if (count==1) execv(processes[0],processes);
-        else {
-            int pipeFd[count - 1][2]; // File descriptors for each process.  
-            for(i = 0; i<count-1; i++){
-                pipe(pipeFd[i]);
-                arr[i].pid = fork();
-                if (!arr[i].pid){
-                    if(i == 0){
-                        execStart(pipeFd[0], processes);
-                    }
-                    else{
-                        execMiddle(pipeFd[i-1], pipeFd[i], &processes[getIndex(processes,i)]);
-                    }
-                }                
-            }
-            execEnd(pipeFd[count-2], &processes[getIndex(processes,count-1)]);
-        }
+    int fd[count-1][2];
+    for(i = 0; i<count-1; i++){
+        pipe(fd[i]);
     }
-    else{
+    for(i = 0; i<count; i++){
+        pid_t childPid = fork();
         processes_array[processes_count].pid = childPid;
-        processes_array[processes_count].path = strdup(processes[0]);
+        processes_array[processes_count].path = strdup(processes[getIndex(processes, i)]);
         processes_count++;
+        if(childPid == 0){
+            if (i == 0){
+                if(count == 1){ //if only 1 process
+                    close(STDIN_FILENO);
+                    execv(processes[0],processes);
+                }
+                int j;
+                for (j = 1; j<count-1; j++){ //close other unused pipes
+                    close(fd[j][0]);
+                    close(fd[j][1]);
+                }
+                execStart(fd[0], processes);
+            }
+            else if (i == count-1){
+                int k;
+                for (k = 0; k<count-2; k++){ //close other unused pipes
+                    close(fd[k][0]);
+                    close(fd[k][1]);
+                }
+                execEnd(fd[i], &processes[getIndex(processes,i)]);
+            }
+            else{
+                int l;
+                for(l = 0; l<count-1; l++){
+                    if(l != i && l != i-1){ // Except the 2 pipes used, close other pipes
+                        close(fd[l][0]);
+                        close(fd[l][1]);
+                    }
+                }
+                execMiddle(fd[i-1], fd[i], &processes[getIndex(processes,i)]);
+            }
+        }        
+    }
+
+
+
+
+
+
+    // pid_t childPid = fork();
+    // arr[0].pid = childPid;
+    // if (childPid == 0){
+    //     if (count==1) execv(processes[0],processes);
+    //     else {
+    //         int pipeFd[count - 1][2]; // File descriptors for each process.  
+    //         pipeFd[0][0] = fd[0];
+    //         pipeFd[0][1] = fd[1];
+            
+    //         // for(i = 0; i<count-1; i++){
+    //         //     pipe(pipeFd[i]);
+    //         //     arr[i].pid = fork();
+    //         //     if (arr[i].pid == 0){
+    //         //         if(i == 0){
+    //         //             execStart(pipeFd[0], processes);
+    //         //         }
+    //         //         else{
+    //         //             execMiddle(pipeFd[i-1], pipeFd[i], &processes[getIndex(processes,i)]);
+    //         //         }
+    //         //     }                
+    //         // }
+    //         // execEnd(pipeFd[count-2], &processes[getIndex(processes,count-1)]);
+    //     }
+
+    // }
+    // else{
+    //     processes_array[processes_count].pid = childPid;
+    //     processes_array[processes_count].path = strdup(processes[0]);
+    //     processes_count++;
+    // }
+    for (i = 0; i<count-1;i++){
+        close(fd[i][0]); //close all the pipes for parent
+        close(fd[i][1]);
     }
     return;
 }
+
 
 // Returns the index of the process wanted
 int getIndex(const char *processes[], int count){
@@ -106,7 +163,8 @@ int getIndex(const char *processes[], int count){
 // INCLUDE close stdin ?
 // serivce --> pipe
 void execStart(int pipe[], const char *process[]){
-    dup2(pipe[1], 1); // output-->pipe
+    dup2(pipe[1], STDOUT_FILENO); // output-->pipe
+    close(STDIN_FILENO); //Close stdinput for the first child
     close(pipe[0]);
     close(pipe[1]);
     execv(process[0],process);
@@ -114,8 +172,8 @@ void execStart(int pipe[], const char *process[]){
 
 // pipe1 --> service --> pipe2
 void execMiddle(int pipe1[], int pipe2[], const char *process[]){
-    dup2(pipe1[0],0); // pipe1-->input
-    dup2(pipe2[1],1); // output-->pipe2
+    dup2(pipe1[0],STDIN_FILENO); // pipe1-->input
+    dup2(pipe2[1],STDOUT_FILENO); // output-->pipe2
     close(pipe1[0]);
     close(pipe1[1]);
     close(pipe2[0]);
@@ -125,7 +183,7 @@ void execMiddle(int pipe1[], int pipe2[], const char *process[]){
 
 // pipe --> service --> stdout
 void execEnd(int pipe[], const char *process[]){
-    dup2(pipe[0],0); // pipe-->input
+    dup2(pipe[0],STDIN_FILENO); // pipe-->input
     close(pipe[0]);
     close(pipe[1]);
     execv(process[0],process);
