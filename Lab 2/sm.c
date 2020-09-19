@@ -13,8 +13,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <stdio.h> 
 
-#include <stdio.h> //Delete this later
 //Need to free malloc and strdup
 int getIndex(const char *processes[], int count);
 void execStart(int pipe[], const char *process[]);
@@ -298,5 +298,21 @@ void sm_startlog(const char *processes[]) {
 
 // Exercise 5: show log file
 void sm_showlog(size_t index) {
+    char logFile[20];
+    snprintf(logFile, sizeof(logFile), "./service%d.log", index);
+    // int logFile_fd = open(logFile, O_RDONLY, S_IRUSR);
+    FILE *filePtr = fopen(logFile, "r");
+    if(filePtr == NULL){
+        printf("service has no log file\n");
+    }
+    char c = fgetc(filePtr);
+    else{
+        while (c != EOF){
+            printf("%c", c);
+            c = fgetc(filePtr);
+        }
+    }
+    fclose(filePtr);
+    return;
 }
 
