@@ -119,10 +119,10 @@ void start(const char *processes[], int redirect_out){
         }        
     }
     char logFile[20];
-    if (redirect_out){
-        //char logFile[20];
-        snprintf(logFile, sizeof(logFile), "./service%d.log", services_count+1);
-        int logFile_fd = open(logFile, O_APPEND | O_CREAT, S_IRWXU);
+    // if (redirect_out){
+    //     //char logFile[20];
+    snprintf(logFile, sizeof(logFile), "./service%d.log", services_count+1);
+    int logFile_fd = open(logFile, O_APPEND | O_CREAT, S_IRWXU);
     }
     for(i = 0; i<count; i++){
         pid_t childPid = fork();
