@@ -111,14 +111,16 @@ void start(const char *processes[], int redirect_out){
         }
         i++;
     }
+    int fd[count-1][2];
     if (count != 1){
-        int fd[count-1][2];
+        //int fd[count-1][2];
         for(i = 0; i<count-1; i++){
             pipe(fd[i]);
         }        
     }
+    char logFile[20];
     if (redirect_out){
-        char logFile[20];
+        //char logFile[20];
         snprintf(logFile, sizeof(logFile), "./service%d.log", services_count+1);
         int logFile_fd = open(logFile, O_APPEND | O_CREAT, S_IRWXU);
     }
