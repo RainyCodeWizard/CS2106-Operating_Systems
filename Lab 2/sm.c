@@ -299,20 +299,21 @@ void sm_startlog(const char *processes[]) {
 // Exercise 5: show log file
 void sm_showlog(size_t index) {
     char logFile[20];
-    snprintf(logFile, sizeof(logFile), "./service%d.log", index);
+    snprintf(logFile, sizeof(logFile), "./service%zu.log", index);
+    //printf("%s--\n",logFile);
     // int logFile_fd = open(logFile, O_RDONLY, S_IRUSR);
-    FILE *filePtr = fopen(logFile, "r");
-    if(filePtr == NULL){
+    if(access(logFile, F_OK) == -1){
         printf("service has no log file\n");
     }
-    char c = fgetc(filePtr);
     else{
-        while (c != EOF){
+        FILE *filePtr = fopen(logFile, "r");
+        char c = fgetc(filePtr);
+	while (c != EOF){
             printf("%c", c);
             c = fgetc(filePtr);
         }
+	fclose(filePtr);
     }
-    fclose(filePtr);
     return;
 }
 
