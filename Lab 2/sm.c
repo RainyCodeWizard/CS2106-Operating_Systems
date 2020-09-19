@@ -10,6 +10,9 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #include <stdio.h> //Delete this later
 //Need to free malloc and strdup
@@ -117,7 +120,7 @@ void start(const char *processes[], int redirect_out){
     if (redirect_out){
         char logFile[20];
         snprintf(logFile, sizeof(logFile), "./service%d.log", services_count+1);
-        int logFile_fd = open(logfile, O_APPEND | O_CREAT, S_IRWXU);
+        int logFile_fd = open(logFile, O_APPEND | O_CREAT, S_IRWXU);
     }
     for(i = 0; i<count; i++){
         pid_t childPid = fork();
