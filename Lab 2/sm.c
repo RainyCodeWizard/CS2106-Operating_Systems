@@ -12,7 +12,7 @@
 #include <stdlib.h>
 
 #include <stdio.h> //Delete this later
-//Need to free malloc
+//Need to free malloc and strdup
 int getIndex(const char *processes[], int count);
 void execStart(int pipe[], const char *process[]);
 void execMiddle(int pipe1[], int pipe2[], const char *process[]);
@@ -98,6 +98,91 @@ void sm_start(const char *processes[]) {
     return;
 }
 
+// Outputs to log file if redirect_out!=0
+void start(const char *processes[], int redirect_out){
+    int i = 0, count = 0; //count represents the number of processes
+    while(1){
+        if (!processes[i]){ //if NULL
+            if(i > 0 && !processes[i-1]) break;
+            count++;
+        }
+        i++;
+    }
+    if (count != 1){
+        int fd[count-1][2];
+        for(i = 0; i<count-1; i++){
+            pipe(fd[i]);
+        }        
+    }
+    if (redirect_out){
+        char logFile[20];
+        snprintf(logFile, sizeof(logFile), "./service%d.log", services_count+1);
+        int logFile_fd = open(logfile, O_APPEND | O_CREAT, S_IRWXU);
+    }
+    for(i = 0; i<count; i++){
+        pid_t childPid = fork();
+        if(childPid == 0){
+            if (i == 0){
+                close(STDIN_FILENO);
+                if(count == 1){ //if only 1 process
+                    if (redirect_out){
+                        dup2(logFile_fd, STDOUT_FILENO);
+                        dup2(logFile_fd, STDERR_FILENO);
+                        close(logFile_fd);
+                    }
+                    execv(processes[0],processes);
+                }
+                int j;
+                for (j = 1; j<count-1; j++){ //close other unused pipes
+                    close(fd[j][0]);
+                    close(fd[j][1]);
+                }
+                if (redirect_out) close(logFile_fd);
+                execStart(fd[0], processes);
+            }
+            else if (i == count-1){
+                int k;
+                for (k = 0; k<count-2; k++){ //close other unused pipes
+                    close(fd[k][0]);
+                    close(fd[k][1]);
+                }
+                if (redirect_out) {
+                    dup2(logFile_fd, STDOUT_FILENO);
+                    dup2(logFile_fd, STDERR_FILENO);
+                    close(logFile_fd);
+                }
+                execEnd(fd[i-1], &processes[getIndex(processes,i)]);
+            }
+            else{
+                int l;
+                for(l = 0; l<count-1; l++){
+                    if(l != i && l != i-1){ // Except the 2 pipes used, close other pipes
+                        close(fd[l][0]);
+                        close(fd[l][1]);
+                    }
+                }
+                if (redirect_out) close(logFile_fd);
+                execMiddle(fd[i-1], fd[i], &processes[getIndex(processes,i)]);
+            }
+        }
+        else{
+            if(i==count-1){ // if it is the last process, or the only process
+                services_array[services_count].pid = childPid;
+                services_array[services_count].path = strdup(processes[getIndex(processes, i)]);
+                services_count++;
+            }
+            else{
+                pids_in_service[services_count][pids_count[services_count]++] = childPid;
+            }
+        }        
+    }
+    for (i = 0; i<count-1;i++){
+        close(fd[i][0]); //close all the pipes for parent
+        close(fd[i][1]);
+    }
+    if (redirect_out) close(logFile_fd);
+    return; 
+}
 
 // Returns the index of the process wanted
 int getIndex(const char *processes[], int count){
@@ -203,6 +288,7 @@ void sm_shutdown(void) {
 
 // Exercise 4: start with output redirection
 void sm_startlog(const char *processes[]) {
+    start(processes, 1);
 }
 
 // Exercise 5: show log file
