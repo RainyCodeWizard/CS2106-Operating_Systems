@@ -32,6 +32,10 @@ void sm_init(void) {
 
 // Use this function to do any cleanup of resources.
 void sm_free(void) {
+    int i;
+    for(i = 0; i < services_count; i++){
+        free(services_array[i].path);
+    }
 }
 
 // Exercise 1a/2: start services
@@ -44,7 +48,6 @@ void sm_start(const char *processes[]) {
         }
         i++;
     }
-    sm_status_t* arr = (sm_status_t*)malloc(count*sizeof(sm_status_t)); //Creates an array to store child processors
     int fd[count-1][2];
     for(i = 0; i<count-1; i++){
         pipe(fd[i]);
