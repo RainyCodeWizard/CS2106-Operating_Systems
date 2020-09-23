@@ -15,19 +15,19 @@
 #include <fcntl.h>
 #include <stdio.h> 
 
-//Need to free malloc and strdup
 int getIndex(const char *processes[], int count);
 void execStart(int pipe[], const char *process[]);
 void execMiddle(int pipe1[], int pipe2[], const char *process[]);
 void execEnd(int pipe[], const char *process[]);
 
 sm_status_t services_array[SM_MAX_SERVICES]; // To take note of the informations of processes
-int services_count = 0; // To take note of the amount of processes currently
+int services_count; // To take note of the amount of processes currently
 pid_t pids_in_service[SM_MAX_SERVICES][SM_MAX_SERVICES];
 int pids_count[SM_MAX_SERVICES] = {0};
 
 // Use this function to any initialisation if you need to.
 void sm_init(void) {
+    services_count = 0;
 }
 
 // Use this function to do any cleanup of resources.
@@ -122,11 +122,9 @@ void start(const char *processes[], int redirect_out){
         }        
     }
     char logFile[20];
-    // if (redirect_out){
-    //     //char logFile[20];
     snprintf(logFile, sizeof(logFile), "./service%d.log", services_count);
     int logFile_fd = open(logFile, O_RDWR|O_APPEND|O_CREAT, S_IRWXU);
-    //}
+
     for(i = 0; i<count; i++){
         pid_t childPid = fork();
         if(childPid == 0){
@@ -207,24 +205,6 @@ int getIndex(const char *processes[], int count){
     return index;
 }
 
-// To get the correct process argument in array form
-// void sliceArray(const char *processes[], const char *process[], int index){
-//     int i = 0, count = 0, j = 0;
-//     while(1){
-//         if(count > index){
-//             break;
-//         }
-//         if(!process[i]){ // if NULL
-//             count++;
-//         }
-//         else if(count == index){
-//             process[j] = strdup(processes[i]);
-//             j++;
-//         }
-//         i++;
-//     }
-//     process[j] = NULL;
-// }
 
 // command --> pipe
 void execStart(int pipe[], const char *process[]){
