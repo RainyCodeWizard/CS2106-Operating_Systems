@@ -10,12 +10,26 @@
 // Initialise barrier here
 void barrier_init ( barrier_t *barrier, int count ) {
     barrier->count = count;
+    barrier->arrived = 0;
+    
+    sem_init(&barrier->mutex,0,1);
+    sem_init(&barrier->waitQ,0,0);
 }
 
 void barrier_wait ( barrier_t *barrier ) {
-
+    sem_wait(&barrier->mutex);
+    barrier->arrived++;
+    sem_post(&barrier->mutex);
+    
+    if(barrier->arrived == barrier->count){
+        sem_post(&barrier->waitQ);
+    }
+    sem_wait(&barrier->waitQ);
+    sem_post(&barrier->waitQ);
 }
 
 // Perform cleanup here if you need to
 void barrier_destroy ( barrier_t *barrier ) {
+    sem_destroy(&barrier->mutex);
+    sem_destroy(&barrier->waitQ);
 }

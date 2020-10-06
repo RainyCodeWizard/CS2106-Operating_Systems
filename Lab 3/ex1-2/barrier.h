@@ -7,9 +7,13 @@
 #ifndef __CS2106_BARRIER_H_
 #define __CS2106_BARRIER_H_
 
+#include <semaphore.h>
 typedef struct barrier {
   int count;
   // add additional fields here
+  int arrived;
+  sem_t mutex; //Binary semaphore to provide mutual exclusion
+  sem_t waitQ; // for N-1 processes to block
 } barrier_t;
 
 void barrier_init ( barrier_t *barrier, int count );
