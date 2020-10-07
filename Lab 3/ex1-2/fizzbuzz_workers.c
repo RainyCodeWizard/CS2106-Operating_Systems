@@ -67,9 +67,18 @@ void fizzbuzz_destroy() {
 
 // int thread refers to their respective threads
 int check(int n, int thread){
-    if (n % 3 == 0 && n % 5 == 0 && thread == 4) return 1;
-    if (n % 5 == 0 && thread == 3) return 1;
-    if (n % 3 == 0 && thread == 2) return 1;
-    if (thread == 1) return 1;
+    if (n % 3 == 0 && n % 5 == 0){
+        if (thread == 4) return 1;
+	return 0;
+    }
+    if (n % 5 == 0){
+        if (thread == 3) return 1;
+	return 0;
+    }
+    if (n % 3 == 0){
+        if (thread == 2) return 1;
+	return 0;
+    }
+    if (thread ==  1) return 1;
     return 0;
 }
