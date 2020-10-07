@@ -6,18 +6,15 @@
 #include "fizzbuzz_workers.h"
 #include "barrier.h" // you may use barriers if you think it can help your
                      // implementation
-
+#include "stdlib.h"
+#include "semaphore.h"
 // declare variables to be used here
-#define ensure_successful_malloc(ptr)                           \
-  if (ptr == NULL) {                                            \
-    perror("Memory allocation unsuccessful for" #ptr "\n");     \
-    exit(1);                                                    \
-  }
 
-barrier_t *barrier = malloc( sizeof(barrier_t) );
-ensure_successful_malloc(barrier);
+barrier_t *barrier = NULL;
+
 
 void fizzbuzz_init ( int n ) {
+    barrier = malloc(sizeof(barrier_t));
     barrier_init( barrier, 4 ); // There are only 4 threads
 }
 
