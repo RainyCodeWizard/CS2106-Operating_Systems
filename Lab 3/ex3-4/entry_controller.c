@@ -16,7 +16,7 @@ void entry_controller_init( entry_controller_t *entry_controller, int loading_ba
         else sem_init(&entry_controller->waitingQueue[i],0,0);
     }
     entry_controller->queueStart = loading_bays % ENTRY_CONTROLLER_MAX_USES;
-    entry_controller->queueEnd = 0
+    entry_controller->queueEnd = 0;
 }
 
 void entry_controller_wait( entry_controller_t *entry_controller ) {
