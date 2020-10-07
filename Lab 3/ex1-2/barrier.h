@@ -13,7 +13,9 @@ typedef struct barrier {
   // add additional fields here
   int arrived;
   sem_t mutex; //Binary semaphore to provide mutual exclusion
-  sem_t waitQ; // for N-1 processes to block
+  // sem_t waitQ; // for N-1 processes to block
+  sem_t turnstile1;
+  sem_t turnstile2;
 } barrier_t;
 
 void barrier_init ( barrier_t *barrier, int count );
