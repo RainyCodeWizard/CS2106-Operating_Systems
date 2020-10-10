@@ -13,6 +13,12 @@
 
 typedef struct exit_controller {
     // define your variables here
+    int exitEmpty;
+    int threads0; // To count the number of threads waiting
+    int threads1; // for priority 0 & 1
+    sem_t mutex;
+    sem_t lock1; // To lock priority 1
+    sem_t lock0; // To lock priority 0
 } exit_controller_t;
 
 void exit_controller_init(exit_controller_t *exit_controller, int no_of_priorities);
