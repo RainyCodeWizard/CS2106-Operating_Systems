@@ -26,38 +26,7 @@ void entry_controller_wait( entry_controller_t *entry_controller ) {
     entry_controller->queueEnd = (entry_controller->queueEnd + 1) % ENTRY_CONTROLLER_MAX_USES;
     sem_post(&entry_controller->mutex);
     
-    sem_wait(&entry_controller->waitingQueue[prev]);
-
-
-
-
-
-    // sem_wait(&entry_controller->mutex);
-
-    // int loadingBay_value;
-    // sem_getvalue(&entry_controller->waitingBay,&loadingBay_value);
-    // if (loadingBay_value > 0){
-
-    //     sem_post(&entry_controller->waitingQueue[entry_controller->queueStart]);
-    //     entry_controller->queueStart = (entry_controller->queueStart + 1) % ENTRY_CONTROLLER_MAX_USES;
-    //     sem_post(&entry_controller->mutex);
-        
-    // }
-    // else{
-
-    //     int prev = entry_controller->queueEnd;
-    //     entry_controller->queueEnd = (prev + 1) % ENTRY_CONTROLLER_MAX_USES;
-    //     sem_post(&entry_controller->mutex);
-
-    //     sem_wait(&entry_controller->waitingQueue[prev]);
-
-
-        
-    // }
-
-    
-    
-    
+    sem_wait(&entry_controller->waitingQueue[prev]);    
 }
 
 void entry_controller_post( entry_controller_t *entry_controller ) {

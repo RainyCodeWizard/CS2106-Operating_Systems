@@ -14,7 +14,6 @@
 
 typedef struct entry_controller {
     // define your variables here
-    //  sem_t waitingBay;
     sem_t mutex;
     sem_t waitingQueue[ENTRY_CONTROLLER_MAX_USES];
     int queueStart;
