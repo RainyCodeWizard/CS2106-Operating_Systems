@@ -16,6 +16,7 @@ typedef struct exit_controller {
     int exitEmpty;
     int threads0; // To count the number of threads waiting
     int threads1; // for priority 0 & 1
+    int prioritiesNo;
     sem_t mutex;
     sem_t lock1; // To lock priority 1
     sem_t lock0; // To lock priority 0
