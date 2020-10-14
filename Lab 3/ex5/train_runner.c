@@ -21,7 +21,7 @@
 int n_trains;
 int trains_in_loading_bays = 0;
 int loading_bays = 5;
-int no_of_priorities = 2;
+int no_of_priorities = 1;
 int exit_queues[50];
 int trains_in_exit_queues[50][50];
 sem_t *loading_bay_sem;
@@ -69,7 +69,7 @@ int main ( int argc, char *argv[] ) {
   // initialise exit_controller
   exit_controller_t *common_exit_controller = malloc(sizeof(exit_controller_t));
   ensure_successful_malloc( common_exit_controller );
-  exit_controller_init( common_exit_controller, 2 );
+  exit_controller_init( common_exit_controller, no_of_priorities );
 
   // start each task
   pthread_t threads[n_trains];
