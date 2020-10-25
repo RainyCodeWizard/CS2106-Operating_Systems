@@ -6,6 +6,9 @@
 *************************************/
 
 #include <stddef.h>
+#include <unistd.h>
+#include <sys.h>
+#include <fcntl.h>
 
 /*
 You may define helper structs here,
