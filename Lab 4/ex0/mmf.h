@@ -7,7 +7,9 @@
 
 #include <stddef.h>
 #include <unistd.h>
-#include <sys.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
 #include <fcntl.h>
 
 /*
