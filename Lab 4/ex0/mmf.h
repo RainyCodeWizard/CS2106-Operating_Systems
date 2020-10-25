@@ -12,6 +12,9 @@
 #include <sys/mman.h>
 #include <fcntl.h>
 
+#include <stdio.h>
+#include <stdlib.h>
+
 /*
 You may define helper structs here,
 as long as the functions satisfy the

@@ -9,7 +9,7 @@
 
 void *mmf_create_or_open(const char *name, size_t sz) {
     /* TODO */
-    int fd = open(name, O_RDWR|O_APPEND|O_CREAT, S_IROTH|S_IWOTH); // Not sure about mode - it gives others read and write permission
+    int fd = open(name, O_RDWR|O_CREAT, S_IRWXU|S_IRWXO); // Not sure about mode - it gives others read and write permission
     if(fd == -1){
         printf("Error opening file\n");
         exit(1);
@@ -19,7 +19,7 @@ void *mmf_create_or_open(const char *name, size_t sz) {
         exit(2);
     }
     void *ptr = mmap(NULL, sz, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
-    if(ptr == MAPFAILED){
+    if(ptr == MAP_FAILED){
         printf("Error mmap\n");
         exit(3);
     }
