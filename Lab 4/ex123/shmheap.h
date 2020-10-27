@@ -10,10 +10,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#include <stdio.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <stdlib.h>
 /*
 You should modify these structs to suit your implementation,
 but remember that all the functions declared here must have
@@ -26,7 +22,7 @@ requirements in the lab document.  If you declare additional names (helper struc
 */
 
 typedef struct {
-    void *ptr;
+    int *ptr;
     size_t len;
 } shmheap_memory_handle;
 typedef struct {
