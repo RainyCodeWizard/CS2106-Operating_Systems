@@ -9,25 +9,13 @@
 
 shmheap_memory_handle shmheap_create(const char *name, size_t len) {
     /* TODO */
-    shmheap_memory_handle mem;
+
     int fd = shm_open(name, O_RDWR|O_CREAT, S_IRWXU);
-    if(fd == -1){
-        printf("Error opening file\n");
-        exit(1);
-    }
-    if(ftruncate(fd, len) == -1){
-        printf("Error doing ftruncate\n");
-        exit(2);
-    }
+    ftruncate(fd, len);
     void *ptr = mmap(NULL, len, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
-    if(ptr == MAP_FAILED){
-        printf("Error mmap\n");
-        exit(3);
-    }
-    if(close(fd) == -1){
-        printf("Error close\n");
-        exit(4);
-    }
+    close(fd);
+
+    shmheap_memory_handle mem;
     mem.ptr = ptr;
     mem.len = len;
     return mem;
@@ -35,33 +23,18 @@ shmheap_memory_handle shmheap_create(const char *name, size_t len) {
 
 shmheap_memory_handle shmheap_connect(const char *name) {
     /* TODO */
-    shmheap_memory_handle mem;
     int fd = shm_open(name, O_RDWR,S_IRWXU);
-    if(fd == -1){
-        printf("Error opening file\n");
-        exit(1);
-    }
 
     //Using fstat to get length
     struct stat statbuff;
-    if (fstat(fd, &statbuff) == -1)
-    {
-        printf("Error fstat \n");
-        exit(1);
-    }
+    fstat(fd, &statbuff);
     size_t len = statbuff.st_size;
 
     void *ptr = mmap(NULL, len, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
-    if(ptr == MAP_FAILED){
-        printf("Error mmap\n");
-        exit(3);
-    }
 
-    if(close(fd) == -1){
-        printf("Error close\n");
-        exit(4);
-    }
+    close(fd);
     
+    shmheap_memory_handle mem;
     mem.ptr = ptr;
     mem.len = len;
     return mem;
@@ -69,19 +42,14 @@ shmheap_memory_handle shmheap_connect(const char *name) {
 
 void shmheap_disconnect(shmheap_memory_handle mem) {
     /* TODO */
-    if(munmap(mem.ptr, mem.len) == -1){
-        printf("Error munmap\n");
-        exit(5);
-    }
+    munmap(mem.ptr, mem.len);
 }
 
 void shmheap_destroy(const char *name, shmheap_memory_handle mem) {
     /* TODO */
-    shmheap_disconnect(mem);
-    if(shm_unlink(name) == -1){
-        printf("Error shm_unlink\n");
-        exit(5);
-    }
+    // shmheap_disconnect(mem);
+    munmap(mem.ptr, mem.len);
+    shm_unlink(name);
 }
 
 void *shmheap_underlying(shmheap_memory_handle mem) {
