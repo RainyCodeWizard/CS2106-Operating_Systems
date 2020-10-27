@@ -43,13 +43,13 @@ shmheap_memory_handle shmheap_connect(const char *name) {
 
 void shmheap_disconnect(shmheap_memory_handle mem) {
     /* TODO */
-    munmap(mem.ptr, mem.len);
+    munmap(mem.mem_ptr, mem.size);
 }
 
 void shmheap_destroy(const char *name, shmheap_memory_handle mem) {
     /* TODO */
     // shmheap_disconnect(mem);
-    munmap(mem.ptr, mem.len);
+    munmap(mem.mem_ptr, mem.size);
     shm_unlink(name);
 }
 
@@ -59,7 +59,7 @@ void *shmheap_underlying(shmheap_memory_handle mem) {
 
 void *shmheap_alloc(shmheap_memory_handle mem, size_t sz) {
     /* TODO */
-    return mem.ptr;
+    return mem.mem_ptr;
 }
 
 void shmheap_free(shmheap_memory_handle mem, void *ptr) {
@@ -68,12 +68,12 @@ void shmheap_free(shmheap_memory_handle mem, void *ptr) {
 
 shmheap_object_handle shmheap_ptr_to_handle(shmheap_memory_handle mem, void *ptr) {
     /* TODO */
-    shmheap_object_handle handle = {(int)ptr - (int)mem.ptr};
+    shmheap_object_handle handle = {(int)ptr - (int)mem.mem_ptr};
     //handle.offset = (int)ptr - (int)mem.ptr;
     return handle;
 }
 
 void *shmheap_handle_to_ptr(shmheap_memory_handle mem, shmheap_object_handle hdl) {
     /* TODO */
-    return mem.ptr + hdl.offset;
+    return mem.mem_ptr + hdl.offset;
 }
