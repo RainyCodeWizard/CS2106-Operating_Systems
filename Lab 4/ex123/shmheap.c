@@ -10,7 +10,7 @@
 shmheap_memory_handle shmheap_create(const char *name, size_t len) {
     /* TODO */
     shmheap_memory_handle mem;
-    int fd = shm_open(name, O_RDWR|O_CREAT, S_IRWXU|S_IRWXO);
+    int fd = shm_open(name, O_RDWR|O_CREAT, S_IRWXU);
     if(fd == -1){
         printf("Error opening file\n");
         exit(1);
@@ -36,7 +36,7 @@ shmheap_memory_handle shmheap_create(const char *name, size_t len) {
 shmheap_memory_handle shmheap_connect(const char *name) {
     /* TODO */
     shmheap_memory_handle mem;
-    int fd = shm_open(name, O_RDWR,S_IRWXU|S_IRWXO);
+    int fd = shm_open(name, O_RDWR,S_IRWXU);
     if(fd == -1){
         printf("Error opening file\n");
         exit(1);
@@ -100,7 +100,7 @@ void shmheap_free(shmheap_memory_handle mem, void *ptr) {
 shmheap_object_handle shmheap_ptr_to_handle(shmheap_memory_handle mem, void *ptr) {
     /* TODO */
     shmheap_object_handle handle;
-    handle.offset = ptr - mem.ptr;
+    handle.offset = (int)ptr - (int)mem.ptr;
     return handle;
 }
 
