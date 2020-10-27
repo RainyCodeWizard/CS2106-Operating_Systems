@@ -25,8 +25,8 @@ requirements in the lab document.  If you declare additional names (helper struc
 */
 
 typedef struct {
-    int *mem_ptr;
-    size_t size;
+    void *ptr;
+    size_t len;
 } shmheap_memory_handle;
 typedef struct {
     int offset;

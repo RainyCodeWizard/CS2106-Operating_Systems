@@ -12,12 +12,12 @@ shmheap_memory_handle shmheap_create(const char *name, size_t len) {
 
     int fd = shm_open(name, O_CREAT | O_RDWR, S_IRWXU);
     ftruncate(fd, len);
-    int *ptr = mmap(NULL, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    void *ptr = mmap(NULL, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     close(fd);
 
-    shmheap_memory_handle mem = {ptr,len};
-    //mem.ptr = ptr;
-    //mem.len = len;
+    shmheap_memory_handle mem;// = {ptr,len};
+    mem.ptr = ptr;
+    mem.len = len;
     return mem;
 
 }
@@ -29,27 +29,27 @@ shmheap_memory_handle shmheap_connect(const char *name) {
     //Using fstat to get length
     struct stat statbuff;
     fstat(fd, &statbuff);
-    //size_t len = statbuff.st_size;
+    size_t len = statbuff.st_size;
 
-    int *ptr = mmap(NULL, statbuff.st_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    void *ptr = mmap(NULL, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 
     close(fd);
     
-    shmheap_memory_handle mem = {ptr, statbuff.st_size};
-    //mem.ptr = ptr;
-    //mem.len = len;
+    shmheap_memory_handle mem;// = {ptr, statbuff.st_size};
+    mem.ptr = ptr;
+    mem.len = len;
     return mem;
 }
 
 void shmheap_disconnect(shmheap_memory_handle mem) {
     /* TODO */
-    munmap(mem.mem_ptr, mem.size);
+    munmap(mem.ptr, mem.len);
 }
 
 void shmheap_destroy(const char *name, shmheap_memory_handle mem) {
     /* TODO */
-    // shmheap_disconnect(mem);
-    munmap(mem.mem_ptr, mem.size);
+    shmheap_disconnect(mem);
+    //munmap(mem.ptr, mem.len);
     shm_unlink(name);
 }
 
@@ -59,7 +59,7 @@ void *shmheap_underlying(shmheap_memory_handle mem) {
 
 void *shmheap_alloc(shmheap_memory_handle mem, size_t sz) {
     /* TODO */
-    return mem.mem_ptr;
+    return mem.ptr;
 }
 
 void shmheap_free(shmheap_memory_handle mem, void *ptr) {
@@ -68,12 +68,12 @@ void shmheap_free(shmheap_memory_handle mem, void *ptr) {
 
 shmheap_object_handle shmheap_ptr_to_handle(shmheap_memory_handle mem, void *ptr) {
     /* TODO */
-    shmheap_object_handle handle = {(int)ptr - (int)mem.mem_ptr};
-    //handle.offset = (int)ptr - (int)mem.ptr;
+    shmheap_object_handle handle;// = {ptr - mem.ptr};
+    handle.offset = ptr - mem.ptr;
     return handle;
 }
 
 void *shmheap_handle_to_ptr(shmheap_memory_handle mem, shmheap_object_handle hdl) {
     /* TODO */
-    return mem.mem_ptr + hdl.offset;
+    return mem.ptr + hdl.offset;
 }
