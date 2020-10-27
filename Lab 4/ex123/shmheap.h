@@ -9,6 +9,11 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <stdlib.h>
 /*
 You should modify these structs to suit your implementation,
 but remember that all the functions declared here must have

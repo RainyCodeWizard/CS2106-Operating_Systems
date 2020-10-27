@@ -36,7 +36,7 @@ shmheap_memory_handle shmheap_create(const char *name, size_t len) {
 shmheap_memory_handle shmheap_connect(const char *name) {
     /* TODO */
     shmheap_memory_handle mem;
-    int fd = shm_open(name, O_RDWR);
+    int fd = shm_open(name, O_RDWR,S_IRWXU|S_IRWXO);
     if(fd == -1){
         printf("Error opening file\n");
         exit(1);
@@ -44,9 +44,9 @@ shmheap_memory_handle shmheap_connect(const char *name) {
 
     //Using fstat to get length
     struct stat statbuff;
-    if (fstat(fd, &statbuf) == -1)
+    if (fstat(fd, &statbuff) == -1)
     {
-        printf("Error fstat %s\n");
+        printf("Error fstat \n");
         exit(1);
     }
     size_t len = statbuff.st_size;
@@ -78,7 +78,7 @@ void shmheap_disconnect(shmheap_memory_handle mem) {
 void shmheap_destroy(const char *name, shmheap_memory_handle mem) {
     /* TODO */
     shmheap_disconnect(mem);
-    if(shm_unlink(*name) == -1){
+    if(shm_unlink(name) == -1){
         printf("Error shm_unlink\n");
         exit(5);
     }
