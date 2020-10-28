@@ -15,10 +15,6 @@ shmheap_memory_handle shmheap_create(const char *name, size_t len) {
     void *ptr = mmap(NULL, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     close(fd);
 
-    //Bookkeeping. Adding header to the start of shared memory
-    shmheap_header header = {len, 1, NULL};
-    memcpy(ptr, &header, sizeof(shmheap_header));
-
     shmheap_memory_handle mem;// = {ptr,len};
     mem.ptr = ptr;
     mem.len = len;
@@ -31,14 +27,13 @@ shmheap_memory_handle shmheap_connect(const char *name) {
     int fd = shm_open(name, O_RDWR,S_IRWXU);
 
     //Using fstat to get length
-    // struct stat statbuff;
-    // fstat(fd, &statbuff);
-    // size_t len = statbuff.st_size;
+    struct stat statbuff;
+    fstat(fd, &statbuff);
+    size_t len = statbuff.st_size;
 
-    shmheap_header *header_ptr = mmap(NULL, sizeof(shmheap_header), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    void *ptr = mmap(NULL, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+
     close(fd);
-    size_t len = header_ptr->len;
-    void *ptr = mremap(header_ptr, sizeof(shmheap_header), len, MREMAP_MAYMOVE);
     
     shmheap_memory_handle mem;// = {ptr, statbuff.st_size};
     mem.ptr = ptr;
@@ -64,8 +59,7 @@ void *shmheap_underlying(shmheap_memory_handle mem) {
 
 void *shmheap_alloc(shmheap_memory_handle mem, size_t sz) {
     /* TODO */
-    shmheap_header *header_ptr = mem.ptr;
-    return header_ptr + 1; //After the header
+    return mem.ptr;
 }
 
 void shmheap_free(shmheap_memory_handle mem, void *ptr) {

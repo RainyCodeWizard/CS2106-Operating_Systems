@@ -12,7 +12,6 @@
 
 #include <unistd.h>
 #include <sys/types.h>
-// #include <stdbool.h>
 
 /*
 You should modify these structs to suit your implementation,
@@ -32,16 +31,6 @@ typedef struct {
 typedef struct {
     int offset;
 } shmheap_object_handle;
-
-typedef struct {
-    size_t len; // Len of shared memory. (4 bytes)
-    int free_status; // True if space is free after this header. False if there is data. (2 or 4 bytes)
-    void *next_partition; // Pointer to the next partition. If no next partition value is NULL. (4 or 8 bytes)
-} shmheap_header;
-typedef struct {
-    int free_status; // True if space is free after this header. False if there is data. (2 or 4 bytes)
-    void *next_partition; // Pointer to the next partition. If no next partition value is NULL. (4 or 8 bytes)
-} shmheap_partition;
 
 
 /*
