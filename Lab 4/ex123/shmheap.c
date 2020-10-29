@@ -19,7 +19,7 @@ shmheap_memory_handle shmheap_create(const char *name, size_t len) {
     header.len = len;
     header.free = 1;
     header.data_size = len - sizeof(shmheap_header);
-    header.next_partition = NULL
+    header.next_partition = NULL;
     memcpy(ptr, &header, sizeof(shmheap_header));
 
     shmheap_memory_handle mem;
@@ -78,7 +78,8 @@ void *shmheap_alloc(shmheap_memory_handle mem, size_t sz) {
             return partition_ptr + 1;
         }
         partition_ptr = partition_ptr->next_partition;
-    }
+    } 
+    return mem.ptr; // To avoid error of not returning anything
 }
 
 /* Cases of partitions:
@@ -128,7 +129,7 @@ void shmheap_allocate_partition(void *start_ptr, size_t sz, shmheap_partition *n
                 temp.next_partition = NULL;
                 memcpy(temp_ptr, &temp, sizeof(shmheap_partition));
             }
-
+            shmheap_partition temp;
             temp.free = 0;
             temp.data_size = sz;
             temp.next_partition = temp_ptr;
