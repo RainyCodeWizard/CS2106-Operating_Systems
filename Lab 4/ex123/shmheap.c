@@ -18,6 +18,7 @@ shmheap_memory_handle shmheap_create(const char *name, size_t len) {
     shmheap_header header;
     header.len = len;
     header.free = 1;
+    header.data_size = len - sizeof(shmheap_header);
     header.next_partition = NULL;
     memcpy(ptr, &header, sizeof(shmheap_header));
 
@@ -57,29 +58,23 @@ void *shmheap_underlying(shmheap_memory_handle mem) {
 
 void *shmheap_alloc(shmheap_memory_handle mem, size_t sz) {
     shmheap_header *header_ptr = mem.ptr;
-    size_t data_size;
-    if(header_ptr->next_partition) data_size = shmheap_data_size(header_ptr + 1,header_ptr->next_partition);
-
-    size_t free_size = shmheap_free_size(header_ptr);
-
     if (!header_ptr->next_partition){ //If next_partition is NULL, i.e. no memory is occupied
-        shmheap_allocate_partition(header_ptr + 1, sz, NULL, 0, free_size);
+        shmheap_allocate_partition(header_ptr + 1, sz, NULL, 0);
         return header_ptr + 1; //After the header
     }
-    else if(header_ptr->free && data_size >= sz){
-        shmheap_allocate_partition(header_ptr + 1, sz, header_ptr->next_partition, 0, free_size);
+    else if(header_ptr->free && header_ptr->data_size >= sz){
+        shmheap_allocate_partition(header_ptr + 1, sz, header_ptr->next_partition, 0);
         return header_ptr + 1;
     }
 
     shmheap_partition *partition_ptr = header_ptr->next_partition;
-    if (partition_ptr->next_partition) data_size = shmheap_data_size(partition_ptr + 1,partition_ptr->next_partition);
     while (partition_ptr){
         if (!partition_ptr->next_partition){ //If there is no next partition. ASSUMPTION: there is enough space in memory
-            shmheap_allocate_partition(partition_ptr + 1, sz, NULL, 1, free_size);
+            shmheap_allocate_partition(partition_ptr + 1, sz, NULL, 1);
             return partition_ptr + 1;
         }
-        else if (partition_ptr->free && data_size >= sz){
-            shmheap_allocate_partition(partition_ptr + 1, sz, partition_ptr->next_partition, 1, free_size);
+        else if (partition_ptr->free && partition_ptr->data_size >= sz){
+            shmheap_allocate_partition(partition_ptr + 1, sz, partition_ptr->next_partition, 1);
             return partition_ptr + 1;
         }
         partition_ptr = partition_ptr->next_partition;
@@ -95,7 +90,7 @@ Case 2: There is a partition next.
     a) If current ptr is Header. Means memory to be allocated is between Header and a partition.
     b) If current ptr is a partition. Means memory to be allocated is between 2 partitions.
 */
-void shmheap_allocate_partition(void *start_ptr, size_t sz, shmheap_partition *next_partition, int notHeader, size_t free_size){ // notHeader is 0 when header.
+void shmheap_allocate_partition(void *start_ptr, size_t sz, shmheap_partition *next_partition, int notHeader){ // notHeader is 0 when header.
     if (sz % 8) sz += 8 - sz % 8; // Rounding size to multiple of 8
 
     if (!next_partition){ //If next_partition is NULL, i.e. free memory from pointer onwards
@@ -108,45 +103,42 @@ void shmheap_allocate_partition(void *start_ptr, size_t sz, shmheap_partition *n
             shmheap_header *header = start_ptr; // Might give error
             header--;
 
-            if (free_size >= sz + sizeof(shmheap_partition)) {
-                shmheap_partition temp;
-                temp.free = 1;
-                temp.next_partition = NULL;
-                memcpy(temp_ptr, &temp, sizeof(shmheap_partition));
+            shmheap_partition temp;
+            temp.free = 1;
+            temp.data_size = header->data_size - sz - sizeof(shmheap_partition);
+            memcpy(temp_ptr, &temp, sizeof(shmheap_partition));
 
-                shmheap_header temp_header;
-                temp_header.len = header->len;
-                temp_header.free = 0;
-                temp_header.next_partition = temp_ptr;
-                memcpy(header, &temp_header, sizeof(shmheap_header));
-            }
-            else{
-                shmheap_header temp_header;
-                temp_header.len = header->len;
-                temp_header.free = 0;
-                temp_header.next_partition = NULL;
-                memcpy(header, &temp_header, sizeof(shmheap_header));
-            }
-            // Point header to the partition
             
+            // Point header to the partition
+            shmheap_header temp_header;
+            temp_header.len = header->len;
+            temp_header.free = 0;
+            temp_header.data_size = sz;
+            temp_header.next_partition = temp_ptr;
+            memcpy(header, &temp_header, sizeof(shmheap_header));
         }
         else{
             // Might give error, didnt check if have enough space for partition.
             shmheap_partition *curr_partition = start_ptr;
             curr_partition--;
-            if (free_size >= sz + sizeof(shmheap_partition)) { //To check if there is space for partition
+
+            if (curr_partition->data_size - sz >= sizeof(shmheap_partition)){ //To check if there is space for partition
                 shmheap_partition temp;
                 temp.free = 1;
+                temp.data_size = curr_partition->data_size - sz - sizeof(shmheap_partition);
                 temp.next_partition = NULL;
                 memcpy(temp_ptr, &temp, sizeof(shmheap_partition));
-                
+                //
+                shmheap_partition temp;
                 temp.free = 0;
+                temp.data_size = sz;
                 temp.next_partition = temp_ptr;
                 memcpy(curr_partition, &temp, sizeof(shmheap_partition)); // Change current partition status to allocated
             }
-            else {
+            else{//
                 shmheap_partition temp;
                 temp.free = 0;
+                temp.data_size = sz;
                 temp.next_partition = NULL;
                 memcpy(curr_partition, &temp, sizeof(shmheap_partition)); // Change current partition status to allocated
             }
@@ -155,8 +147,7 @@ void shmheap_allocate_partition(void *start_ptr, size_t sz, shmheap_partition *n
     else if (notHeader == 0){ // if header. Same as the else below, catered for header case
         shmheap_header *header = start_ptr;
         header--; // moving from start_ptr to header. Might give error!
-        size_t data_size = shmheap_data_size(header + 1, header->next_partition);
-        if (data_size < sz + sizeof(shmheap_partition)){ // If there is not enough space for another partition, dont put in partition
+        if (header->data_size < sz + sizeof(shmheap_partition)){ // If there is not enough space for another partition, dont put in partition
             header->free = 0; // Might give error, didnt use memcpy
             header->next_partition = next_partition;
         }
@@ -166,18 +157,19 @@ void shmheap_allocate_partition(void *start_ptr, size_t sz, shmheap_partition *n
 
             shmheap_partition temp;
             temp.free = 1;
+            temp.data_size = header->data_size - sz - sizeof(shmheap_partition); // Remaining size of free space after allocating object and partition
             temp.next_partition = next_partition;
             memcpy(temp_ptr, &temp, sizeof(shmheap_partition));
 
             header->free = 0; //Might giver error
+            header->data_size = sz;
             header->next_partition = temp_ptr;
         }
     }
     else{
         shmheap_partition *curr_partition = start_ptr;
         curr_partition--; // moving from start_ptr to curr_partition. Might give error!
-        size_t data_size = shmheap_data_size(start_ptr, curr_partition->next_partition);
-        if (data_size < sz + sizeof(shmheap_partition)){ // If there is not enough space for another partition, dont put in partition
+        if (curr_partition->data_size < sz + sizeof(shmheap_partition)){ // If there is not enough space for another partition, dont put in partition
             curr_partition->free = 0; // Might give error, didnt use memcpy
             curr_partition->next_partition = next_partition;
         }
@@ -187,10 +179,13 @@ void shmheap_allocate_partition(void *start_ptr, size_t sz, shmheap_partition *n
 
             shmheap_partition temp;
             temp.free = 1;
+            temp.data_size = curr_partition->data_size - sz - sizeof(shmheap_partition); // Remaining size of free space after allocating object and partition
             temp.next_partition = next_partition;
             memcpy(temp_ptr, &temp, sizeof(shmheap_partition));
 
+            //curr_partition->next_partition = temp_ptr; // Might give error, not sure if we can do this. Changing mapped mem without using memcpy
             temp.free = 0;
+            temp.data_size = sz;
             temp.next_partition = temp_ptr;
             memcpy(curr_partition, &temp, sizeof(shmheap_partition)); // Change current partition status to allocated
         }
@@ -205,6 +200,7 @@ void shmheap_free(shmheap_memory_handle mem, void *ptr) {
         header->free = 1;
         if (header->next_partition && ((shmheap_partition *)header->next_partition)->free){ // If there is a next partition and it is free
             header->next_partition = ((shmheap_partition *)header->next_partition)->next_partition;
+            header->data_size += ((shmheap_partition *)header->next_partition)->data_size + sizeof(shmheap_partition);
         }
         return;
     }
@@ -225,15 +221,18 @@ void shmheap_free(shmheap_memory_handle mem, void *ptr) {
         // Check Left and Right to merge
         if(header->free && next_partition && next_partition->free){
             header->next_partition = next_partition->next_partition;
+            header->data_size += partition->data_size + next_partition->data_size + 2 * sizeof(shmheap_partition);
         }
         // Check Left to merge
         else if (header->free){
             header->next_partition = partition->next_partition;
+            header->data_size += partition->data_size + sizeof(shmheap_partition);
         }
         // Check Right to merge
         else if (next_partition){
             if (next_partition->free){
                 partition->next_partition = next_partition->next_partition;
+                partition->data_size += next_partition->data_size + sizeof(shmheap_partition);
             }
         }
     }
@@ -241,37 +240,24 @@ void shmheap_free(shmheap_memory_handle mem, void *ptr) {
         // Check Left and Right to merge
         if (prev_partition->free && next_partition && next_partition->free) {
             prev_partition->next_partition = next_partition->next_partition;
+            prev_partition->data_size += partition->data_size + next_partition->data_size + 2 * sizeof(shmheap_partition);
         }
         // Check Left to merge
         else if (prev_partition->free) {
             prev_partition->next_partition = partition->next_partition;
+            prev_partition->data_size += partition->data_size + sizeof(shmheap_partition);
         }
         // Check Right to merge
         else if (next_partition && next_partition->free) {
             partition->next_partition = next_partition->next_partition;
+            partition->data_size += next_partition->data_size + sizeof(shmheap_partition);
         }
     }
 }
-size_t shmheap_data_size(void *leftPtr, void *rightPtr) {
-    return (char *)rightPtr-(char *)leftPtr;
+size_t shmheap_data_size(char *leftPtr, char *rightPtr){
+    return rightPtr-leftPtr;
 }
 
-// Find the amount of free space at the end of region
-size_t shmheap_free_size(shmheap_header *header) {
-    shmheap_partition *partition = header->next_partition;
-    if (partition) {
-        while(partition->next_partition) {
-            partition = partition->next_partition;
-        }
-        partition++;
-        size_t size = header->len;
-        size -= (char *) partition - (char *)header;
-        return size;
-    }
-    else {
-        return header->len -sizeof(shmheap_header);
-    }
-}
 
 shmheap_object_handle shmheap_ptr_to_handle(shmheap_memory_handle mem, void *ptr) {
     shmheap_object_handle handle;// = {ptr - mem.ptr};
