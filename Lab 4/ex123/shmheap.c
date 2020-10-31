@@ -129,7 +129,7 @@ void shmheap_allocate_partition(void *start_ptr, size_t sz, shmheap_partition *n
                 temp.next_partition = NULL;
                 memcpy(temp_ptr, &temp, sizeof(shmheap_partition));
                 //
-                shmheap_partition temp;
+                //shmheap_partition temp;
                 temp.free = 0;
                 temp.data_size = sz;
                 temp.next_partition = temp_ptr;
