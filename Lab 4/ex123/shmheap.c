@@ -254,9 +254,9 @@ void shmheap_free(shmheap_memory_handle mem, void *ptr) {
         }
     }
 }
-size_t shmheap_data_size(char *leftPtr, char *rightPtr){
-    return rightPtr-leftPtr;
-}
+// size_t shmheap_data_size(char *leftPtr, char *rightPtr){
+//     return rightPtr-leftPtr;
+// }
 
 
 shmheap_object_handle shmheap_ptr_to_handle(shmheap_memory_handle mem, void *ptr) {

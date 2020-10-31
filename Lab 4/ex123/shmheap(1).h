@@ -44,9 +44,9 @@ typedef struct {
     void *next_partition; // Pointer to the next partition. If no next partition value is NULL. (4 or 8 bytes)
 } shmheap_partition;
 
-void shmheap_allocate_partition(void *start_ptr, size_t sz, shmheap_partition *next_partition, int notHeader);
-// size_t shmheap_data_size(void *leftPtr, void *rightPtr);
-// size_t shmheap_free_size(shmheap_header *header);
+void shmheap_allocate_partition(void *start_ptr, size_t sz, shmheap_partition *next_partition, int notHeader, size_t free_size);
+size_t shmheap_data_size(void *leftPtr, void *rightPtr);
+size_t shmheap_free_size(shmheap_header *header);
 
 /*
 These functions form the public API of your shmheap library.
