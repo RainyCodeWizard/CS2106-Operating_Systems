@@ -127,7 +127,6 @@ void shmheap_allocate_partition(void *start_ptr, size_t sz, shmheap_partition *n
             temp.next_partition = NULL;
             memcpy(temp_ptr, &temp, sizeof(shmheap_partition));
             // }
-            shmheap_partition temp;
             temp.free = 0;
             temp.next_partition = temp_ptr;
             memcpy(curr_partition, &temp, sizeof(shmheap_partition)); // Change current partition status to allocated
@@ -233,8 +232,8 @@ void shmheap_free(shmheap_memory_handle mem, void *ptr) {
         }
     }
 }
-size_t shmheap_data_size(char *leftPtr, char *rightPtr){
-    return rightPtr-leftPtr;
+size_t shmheap_data_size(void *leftPtr, void *rightPtr){
+    return (char *)rightPtr-(char *)leftPtr;
 }
 
 
