@@ -112,6 +112,15 @@ static int child_proc(const bidir_pipe *bp, const char *mem_name, int child_idx)
                     printf(" %zu", data[i]);
                 }
                 printf("\n");
+                printf("Shared Memory:\n");
+                shmheap_header *header = mem.ptr;
+                printf("Header|Size: %d|Free: %d", header->data_size, header->free);
+                shmheap_partition *ptr = header->next_partition;
+                while(ptr){
+                    printf("|Partition|Size: %d|Free: %d",ptr->data_size, ptr->free);
+                    ptr = ptr->next_partition;
+                }
+                printf("\n")
                 fflush(stdout);
                 shmheap_object_handle hdl = shmheap_ptr_to_handle(mem, data);
                 write(output_fd, &hdl, sizeof(hdl));
