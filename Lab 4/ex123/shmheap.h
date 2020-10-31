@@ -46,6 +46,7 @@ typedef struct {
 
 void shmheap_allocate_partition(void *start_ptr, size_t sz, shmheap_partition *next_partition, int notHeader, size_t free_size);
 size_t shmheap_data_size(void *leftPtr, void *rightPtr);
+size_t shmheap_free_size(shmheap_header *header);
 
 /*
 These functions form the public API of your shmheap library.
