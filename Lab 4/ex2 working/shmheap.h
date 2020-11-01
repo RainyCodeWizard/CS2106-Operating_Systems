@@ -13,8 +13,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <string.h>
-#include <semaphore.h>
-
+// #include <stdbool.h>
 
 /*
 You should modify these structs to suit your implementation,
