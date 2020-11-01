@@ -83,7 +83,6 @@ void *shmheap_alloc(shmheap_memory_handle mem, size_t sz) {
             
             header_ptr->data_size = sz;
         }
-        sem_post(mutex);
         return header_ptr + 1;
     }
     size_t size = header_ptr->data_size;
