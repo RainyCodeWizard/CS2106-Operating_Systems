@@ -113,7 +113,7 @@ void shmheap_free(shmheap_memory_handle mem, void *ptr) {
 
     sem_t *mutex;
     
-    mutex = (void *)(header_ptr + 1);
+    mutex = (void *)(header + 1);
     sem_wait(mutex);
 
     if (header + 1 == ptr) header->free = 1;
