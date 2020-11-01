@@ -73,7 +73,7 @@ void *shmheap_alloc(shmheap_memory_handle mem, size_t sz) {
             
             header_ptr->data_size = sz;
         }
-        return header_ptr++;
+        return header_ptr + 1;
     }
     size_t size = header_ptr->data_size;
     shmheap_partition *partition = (char *)(header_ptr + 1) + size;
@@ -93,7 +93,7 @@ void *shmheap_alloc(shmheap_memory_handle mem, size_t sz) {
 
         partition->data_size = sz; 
     }
-    return partition++;
+    return partition + 1;
     
 }
 
@@ -104,7 +104,7 @@ void shmheap_free(shmheap_memory_handle mem, void *ptr) {
     size_t remaining_size = mem.len - sizeof(shmheap_header) - header->data_size; // If remaining_size==0, Means no more partitions left
     shmheap_partition *prev_partition = NULL;
     shmheap_partition *partition;
-    if (remaining_size) *partition = (char *)(header + 1) + header->data_size;
+    if (remaining_size) partition = (char *)(header + 1) + header->data_size;
     
     while (remaining_size) {
         remaining_size -= partition->data_size + sizeof(shmheap_partition);
