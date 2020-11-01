@@ -14,7 +14,7 @@
 #include <sys/types.h>
 #include <string.h>
 #include <semaphore.h>
-// #include <stdbool.h>
+
 
 /*
 You should modify these structs to suit your implementation,
@@ -45,6 +45,9 @@ typedef struct {
     size_t data_size;
 } shmheap_partition;
 
+void shmheap_allocate_partition(void *start_ptr, size_t sz, shmheap_partition *next_partition, int notHeader);
+// size_t shmheap_data_size(void *leftPtr, void *rightPtr);
+// size_t shmheap_free_size(shmheap_header *header);
 
 /*
 These functions form the public API of your shmheap library.

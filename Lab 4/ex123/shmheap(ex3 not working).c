@@ -14,32 +14,34 @@ shmheap_memory_handle shmheap_create(const char *name, size_t len) {
     void *ptr = mmap(NULL, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     close(fd);
 
-    //Bookkeeping. Adding header to the start of shared memory
-    shmheap_header header;
-    header.len = len;
-    header.free = 1;
-    header.data_size = len - sizeof(shmheap_header);
-    memcpy(ptr, &header, sizeof(shmheap_header));
-
+    // Place a mutex in memory right before header
+    sem_t mutex;
+    sem_init(&mutex, 1, 1);
+    memcpy(ptr, &mutex, sizeof(mutex));
+    
     shmheap_memory_handle mem;
     mem.ptr = ptr;
     mem.len = len;
-
-    // Allocate memory for mutex
-    sem_t *mutex = shmheap_alloc(mem, sizeof(sem_t));
-    sem_init(mutex, 1, 1);
-
     return mem;
 
+    //Bookkeeping. Adding header to the start of shared memory
+    ptr = (char *)ptr + sizeof(sem_t);
+    shmheap_header header;
+    header.len = len;
+    header.free = 1;
+    header.data_size = len - sizeof(shmheap_header) - sizeof(sem_t);
+    memcpy(ptr, &header, sizeof(shmheap_header));
 }
 
 shmheap_memory_handle shmheap_connect(const char *name) {
     int fd = shm_open(name, O_RDWR,S_IRWXU);
 
-    shmheap_header *header_ptr = mmap(NULL, sizeof(shmheap_header), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    void *ptr = mmap(NULL, sizeof(shmheap_header) + sizeof(sem_t), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     close(fd);
+
+    shmheap_header *header_ptr = (char *)ptr + sizeof(sem_t);
     size_t len = header_ptr->len;
-    void *ptr = mremap(header_ptr, sizeof(shmheap_header), len, MREMAP_MAYMOVE);
+    ptr = mremap(ptr, sizeof(shmheap_header) + sizeof(sem_t), len, MREMAP_MAYMOVE);
     
     shmheap_memory_handle mem;
     mem.ptr = ptr;
@@ -61,12 +63,10 @@ void *shmheap_underlying(shmheap_memory_handle mem) {
 }
 
 void *shmheap_alloc(shmheap_memory_handle mem, size_t sz) {
-    shmheap_header *header_ptr = mem.ptr;
-    sem_t *mutex;
-    if (header_ptr->free == 0) { // If header is not free
-        mutex = (void *)(header_ptr + 1);
-        sem_wait(mutex);
-    }
+    sem_t *mutex = mem.ptr;
+    sem_wait(mutex);
+
+    shmheap_header *header_ptr = (shmheap_header *)(mutex + 1);
     
     if (sz % 8) sz += 8 - sz % 8; // Rounding sz to multiple of 8
 
@@ -110,16 +110,13 @@ void *shmheap_alloc(shmheap_memory_handle mem, size_t sz) {
 }
 
 void shmheap_free(shmheap_memory_handle mem, void *ptr) {
-    shmheap_header *header = mem.ptr;
-
-    sem_t *mutex;
-    
-    mutex = (void *)(header_ptr + 1);
+    sem_t *mutex = mem.ptr;
     sem_wait(mutex);
 
+    shmheap_header *header = (shmheap_header *)(mutex + 1);
     if (header + 1 == ptr) header->free = 1;
 
-    size_t remaining_size = mem.len - sizeof(shmheap_header) - header->data_size; // If remaining_size==0, Means no more partitions left
+    size_t remaining_size = mem.len - sizeof(sem_t) - sizeof(shmheap_header) - header->data_size; // If remaining_size==0, Means no more partitions left
     shmheap_partition *prev_partition = NULL;
     shmheap_partition *partition;
     if (remaining_size) partition = (char *)(header + 1) + header->data_size;
