@@ -77,7 +77,7 @@ void *shmheap_alloc(shmheap_memory_handle mem, size_t sz) {
     }
     size_t size = header_ptr->data_size;
     shmheap_partition *partition = (char *)(header_ptr + 1) + size;
-    while (!partition->free && partition->data_size < sz){
+    while (!partition->free || partition->data_size < sz){
         size = partition->data_size;
         partition = (char *)(partition + 1) + size;
     }
