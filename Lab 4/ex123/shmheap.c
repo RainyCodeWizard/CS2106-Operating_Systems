@@ -54,7 +54,7 @@ void shmheap_disconnect(shmheap_memory_handle mem) {
 void shmheap_destroy(const char *name, shmheap_memory_handle mem) {
     shmheap_header *header_ptr = mem.ptr;
     sem_t *mutex = (void *)(header_ptr + 1);
-    sem_destory(mutex);
+    sem_destroy(mutex);
     shmheap_disconnect(mem);
     shm_unlink(name);
 }
