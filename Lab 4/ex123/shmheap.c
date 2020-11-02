@@ -52,6 +52,9 @@ void shmheap_disconnect(shmheap_memory_handle mem) {
 }
 
 void shmheap_destroy(const char *name, shmheap_memory_handle mem) {
+    shmheap_header *header_ptr = mem.ptr;
+    sem_t *mutex = (void *)(header_ptr + 1);
+    sem_destory(mutex);
     shmheap_disconnect(mem);
     shm_unlink(name);
 }
@@ -86,10 +89,10 @@ void *shmheap_alloc(shmheap_memory_handle mem, size_t sz) {
         return header_ptr + 1;
     }
     size_t size = header_ptr->data_size;
-    shmheap_partition *partition = (char *)(header_ptr + 1) + size;
+    shmheap_partition *partition = (void *)((char *)(header_ptr + 1) + size);
     while (!partition->free || partition->data_size < sz){
         size = partition->data_size;
-        partition = (char *)(partition + 1) + size;
+        partition = (void *)((char *)(partition + 1) + size);
     }
     partition->free = 0;
     if (partition->data_size >= sz + sizeof(shmheap_partition)) {
@@ -121,7 +124,7 @@ void shmheap_free(shmheap_memory_handle mem, void *ptr) {
     size_t remaining_size = mem.len - sizeof(shmheap_header) - header->data_size; // If remaining_size==0, Means no more partitions left
     shmheap_partition *prev_partition = NULL;
     shmheap_partition *partition;
-    if (remaining_size) partition = (char *)(header + 1) + header->data_size;
+    if (remaining_size) partition = (void *)((char *)(header + 1) + header->data_size);
     
     while (remaining_size) {
         remaining_size -= partition->data_size + sizeof(shmheap_partition);
@@ -130,15 +133,15 @@ void shmheap_free(shmheap_memory_handle mem, void *ptr) {
         }
         if (!prev_partition && header->free && partition->free) {
             header->data_size += partition->data_size + sizeof(shmheap_partition);
-            partition = (char *)(partition + 1) + partition->data_size; //Might give segmentation error
+            partition = (void *)((char *)(partition + 1) + partition->data_size); //Might give segmentation error
         }
         else if (prev_partition && prev_partition->free && partition->free) {
             prev_partition->data_size += partition->data_size + sizeof(shmheap_partition);
-            partition = (char *)(partition + 1) + partition->data_size; //Might give segmentation error
+            partition = (void *)((char *)(partition + 1) + partition->data_size); //Might give segmentation error
         }
         else if (remaining_size) {
             prev_partition = partition;
-            partition = (char *)(partition + 1) + partition->data_size;
+            partition = (void *)((char *)(partition + 1) + partition->data_size);
         }
     }
     sem_post(mutex);
