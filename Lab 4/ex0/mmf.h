@@ -1,8 +1,8 @@
 /*************************************
 * Lab 4
-* Name:
-* Student No:
-* Lab Group:
+* Name: H Mohamed Hussain
+* Student No: A0199425R
+* Lab Group: 10
 *************************************/
 
 #include <stddef.h>
