@@ -1,6 +1,8 @@
 #include "zc_io.h"
 #include <sys/stat.h>
-
+#include <unistd.h>
+#include <fcntl.h>
+#include <stdlib.h>
 // The zc_file struct is analogous to the FILE struct that you get from fopen.
 struct zc_file {
   // Insert the fields you need here.
