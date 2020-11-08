@@ -3,6 +3,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <stdlib.h>
+#include <sys/mman.h>
+
 // The zc_file struct is analogous to the FILE struct that you get from fopen.
 struct zc_file {
   // Insert the fields you need here.
@@ -17,7 +19,7 @@ struct zc_file {
  **************/
 
 zc_file *zc_open(const char *path) {
-  int fd = open(name, O_CREATE | O_RDWR, S_IRWXU|S_IRWXG|S_IRWXO);
+  int fd = open(path, O_CREAT | O_RDWR, S_IRWXU|S_IRWXG|S_IRWXO);
 
   if (fd == -1){
     return NULL;
