@@ -71,12 +71,13 @@ void zc_read_end(zc_file *file) {
  **************/
 
 char *zc_write_start(zc_file *file, size_t size) {
-  if (size > file->size){ // Not sure whether to use > or !=
-    ftruncate(file->fd, size);
-    void *ptr = mremap(file->ptr, file->size, size, MREMAP_MAYMOVE);
+  if (file->offset + size  > file->size){ // Not sure whether to use > or !=
+    size_t new_size = file->offset + size;
+    ftruncate(file->fd, new_size);
+    void *ptr = mremap(file->ptr, file->size, new_size, MREMAP_MAYMOVE);
     if (ptr == MAP_FAILED) return NULL;
     
-    file->size = size;
+    file->size = new_size;
     file->ptr = ptr;
   }
   char *returnPointer = (char *)file->ptr + file->offset;
