@@ -4,7 +4,6 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <sys/mman.h>
-#include <stdio.h>
 
 // The zc_file struct is analogous to the FILE struct that you get from fopen.
 struct zc_file {
@@ -43,7 +42,7 @@ zc_file *zc_open(const char *path) {
 } 
 
 int zc_close(zc_file *file) {
-  //To implement: Flush to file
+  msync(file->ptr, file->size, MS_SYNC); //Flush
 
   int error = munmap(file->ptr, file->size) | close(file->fd);
   free(file);
@@ -98,7 +97,23 @@ void zc_write_end(zc_file *file) {
 
 off_t zc_lseek(zc_file *file, long offset, int whence) {
   // To implement
-  return -1;
+  switch (whence){
+    case SEEK_SET:
+    file->offset = offset;
+    break;
+
+    case SEEK_CUR:
+    file->offset += offset;
+    break;
+
+    case SEEK_END:
+    file->offset = file->size + offset;
+    break;
+
+    default:
+    return -1;
+  }
+  return file->offset;
 }
 
 /**************
