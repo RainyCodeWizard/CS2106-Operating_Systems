@@ -46,14 +46,14 @@ zc_file *zc_open(const char *path) {
 } 
 
 int zc_close(zc_file *file) {
-  int error = munmap(file->ptr, file->size) | close(file->fd) | msync(file->ptr, file->size, MS_SYNC);
+  int error = msync(file->ptr, file->size, MS_SYNC) | munmap(file->ptr, file->size) | close(file->fd);
   if (pthread_rwlock_destroy(&file->rwlock) != 0) error = -1;
   free(file);
   return error;
 }
 
 const char *zc_read_start(zc_file *file, size_t *size) {
-  pthread_rwlock_rdlock(file->rwlock);
+  pthread_rwlock_rdlock(&file->rwlock);
 
   char *ptr = file->ptr;
   ptr += file->offset;
@@ -130,19 +130,23 @@ off_t zc_lseek(zc_file *file, long offset, int whence) {
 
 int zc_copyfile(const char *source, const char *dest) {
   zc_file *src, *des;
+
   src = zc_open(source);
   if (!src) return -1;
 
   des = zc_open(dest);
   if (!des) {
-    close(src);
+    zc_close(src);
     return -1;
   }
+
+  if (!zc_write_start(des, src->size)) return -1;
 
   int error = copy_file_range(src->fd, NULL, des->fd, NULL, src->size, 0);
   if (error != -1) error = 0;
 
-  error = zc_close(src) | error;
-  error = zc_close(des) | error;
+  zc_write_end(des);
+
+  error = zc_close(src) | zc_close(des);
   return error;
 }
