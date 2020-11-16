@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <sys/mman.h>
 
+#include <pthread.h>
 // The zc_file struct is analogous to the FILE struct that you get from fopen.
 struct zc_file {
   // Insert the fields you need here.
@@ -12,6 +13,7 @@ struct zc_file {
   void *ptr;
   int fd;
   size_t offset;
+  pthread_rwlock_t rwlock;
 };
 
 /**************
@@ -38,18 +40,21 @@ zc_file *zc_open(const char *path) {
   file->fd = fd;
   file->offset = 0;
   
+  if (pthread_rwlock_init(&file->rwlock, NULL) != 0) return NULL;
+
   return file;
 } 
 
 int zc_close(zc_file *file) {
-  msync(file->ptr, file->size, MS_SYNC); //Flush
-
-  int error = munmap(file->ptr, file->size) | close(file->fd);
+  int error = munmap(file->ptr, file->size) | close(file->fd) | msync(file->ptr, file->size, MS_SYNC);
+  if (pthread_rwlock_destroy(&file->rwlock) != 0) error = -1;
   free(file);
   return error;
 }
 
 const char *zc_read_start(zc_file *file, size_t *size) {
+  pthread_rwlock_rdlock(file->rwlock);
+
   char *ptr = file->ptr;
   ptr += file->offset;
   if (file->offset + *size > file->size) {
@@ -60,8 +65,7 @@ const char *zc_read_start(zc_file *file, size_t *size) {
 }
 
 void zc_read_end(zc_file *file) {
-  // To implement
-  // What am i supposed to do here
+  pthread_rwlock_unlock(&file->rwlock);
 }
 
 /**************
@@ -69,6 +73,8 @@ void zc_read_end(zc_file *file) {
  **************/
 
 char *zc_write_start(zc_file *file, size_t size) {
+  pthread_rwlock_wrlock(&file->rwlock);
+
   if (file->size == 0){
     file->ptr = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, file->fd, 0);
   }
@@ -89,6 +95,7 @@ char *zc_write_start(zc_file *file, size_t size) {
 
 void zc_write_end(zc_file *file) {
   msync(file->ptr, file->size, MS_SYNC);
+  pthread_rwlock_unlock(&file->rwlock);
 }
 
 /**************
@@ -96,7 +103,7 @@ void zc_write_end(zc_file *file) {
  **************/
 
 off_t zc_lseek(zc_file *file, long offset, int whence) {
-  // To implement
+  pthread_rwlock_wrlock(&file->rwlock);
   switch (whence){
     case SEEK_SET:
     file->offset = offset;
@@ -113,6 +120,7 @@ off_t zc_lseek(zc_file *file, long offset, int whence) {
     default:
     return -1;
   }
+  pthread_rwlock_unlock(&file->rwlock);
   return file->offset;
 }
 
