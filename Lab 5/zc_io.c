@@ -129,6 +129,20 @@ off_t zc_lseek(zc_file *file, long offset, int whence) {
  **************/
 
 int zc_copyfile(const char *source, const char *dest) {
-  // To implement
-  return -1;
+  zc_file *src, *des;
+  src = zc_open(source);
+  if (!src) return -1;
+
+  des = zc_open(dest);
+  if (!des) {
+    close(src);
+    return -1;
+  }
+
+  int error = copy_file_range(src->fd, NULL, des->fd, NULL, src->size, 0);
+  if (error != -1) error = 0;
+
+  error = zc_close(src) | error;
+  error = zc_close(des) | error;
+  return error;
 }
