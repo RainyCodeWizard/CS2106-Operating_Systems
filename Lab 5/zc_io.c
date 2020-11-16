@@ -4,6 +4,7 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <sys/mman.h>
+#include <stdio.h>
 
 // The zc_file struct is analogous to the FILE struct that you get from fopen.
 struct zc_file {
@@ -29,11 +30,9 @@ zc_file *zc_open(const char *path) {
   struct stat buf;
   if (fstat(fd, &buf) == -1) return NULL;
   int size = buf.st_size;
+  void *ptr = NULL;
+  if (size > 0) ptr = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 
-  void *ptr = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-  
-  if (ptr == MAP_FAILED) return NULL;
-  
   zc_file *file = (zc_file *)malloc(sizeof(zc_file));
   file->size = size;
   file->ptr = ptr;
@@ -71,12 +70,15 @@ void zc_read_end(zc_file *file) {
  **************/
 
 char *zc_write_start(zc_file *file, size_t size) {
+  if (file->size == 0){
+    file->ptr = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, file->fd, 0);
+  }
   char *returnPointer = (char *)file->ptr + file->offset;
   file->offset += size;
   
   if (file->offset > file->size){
     ftruncate(file->fd, file->offset);
-    void *ptr = mremap(file->ptr, file->size, new_size, MREMAP_MAYMOVE);
+    void *ptr = mremap(file->ptr, file->size, file->offset, MREMAP_MAYMOVE);
     if (ptr == MAP_FAILED) return NULL;
     
     file->ptr = ptr;
